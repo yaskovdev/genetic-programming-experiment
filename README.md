@@ -6,21 +6,43 @@ The long-term goal is to explore genomes that can evolve not only behavior, but 
 
 ## Current Prototype
 
-The first vertical slice is implemented in C# and .NET 10. It contains:
+The current vertical slice is implemented in C# and .NET 10. It contains:
 
 - A deterministic 24 by 16 toroidal grid
-- One agent with a direction and position
+- Renewable food distributed in deterministic fertile patches
+- One agent with position, direction, energy, metabolism, eating, and starvation
 - A small bounded Push-style interpreter
-- A WPF viewer with play, pause, single-step, reset, and a visible movement trail
-- Tests for the Push conditional, square movement, and toroidal wrapping
+- A WPF viewer with visible food, an energy bar, a movement trail, play, pause, single-step, and reset
+- A deterministic mutation-only genetic programming experiment
+- Tests for Push branching, genomes, evolution, energy accounting, eating, starvation, movement, wrapping, and baseline survival
 
 The agent is controlled by this immutable Push program:
 
 ```push
-(sensor.tick 8 integer.% 0 integer.= exec.if (action.turn-right) (action.move-forward))
+(sensor.food-here 0 integer.> exec.if (action.eat) (sensor.tick 8 integer.% 0 integer.= exec.if (action.turn-right) (action.move-forward)))
 ```
 
-Every eighth tick it turns right. On all other ticks it moves forward, so it repeatedly walks a square.
+If food is present under the agent, it eats. Otherwise it turns right every eighth tick and moves forward on other ticks. Each tick costs one energy, movement costs one additional energy, and eating restores sixteen energy up to a maximum of one hundred. Empty fertile cells regenerate on deterministic schedules.
+
+### Basic Genetic Programming
+
+Press **Evolve** to run a deterministic GP experiment in the background. The viewer then resets and replays the best evolved controller.
+
+The initial implementation uses:
+
+- 100 genomes for 40 generations
+- Tournament selection with two elites
+- Insertion, deletion, replacement, duplication, and atom mutation
+- No crossover
+- A maximum of 64 Push program points
+- Three deterministic food layouts with 400 ticks per evaluation
+- Fitness based primarily on food consumed, with survival, remaining energy, and a small program-size penalty
+
+Evolution begins with a simple straight-line forager and a mixture of its mutants and random valid Push programs:
+
+```push
+(sensor.food-here 0 integer.> exec.if (action.eat) (action.move-forward))
+```
 
 Run the viewer from the repository root:
 
@@ -33,6 +55,7 @@ Controls:
 - `Space`: play or pause
 - `Right Arrow`: execute one tick
 - `R`: reset the world
+- `E`: evolve and replay a controller
 
 The solution keeps the simulator independent of WPF:
 
@@ -42,7 +65,7 @@ The solution keeps the simulator independent of WPF:
 | `GeneticProgrammingExperiment.Viewer` | Interactive WPF visualization |
 | `GeneticProgrammingExperiment.Tests` | Deterministic behavior tests |
 
-There is no evolution, energy, food, or reproduction yet. This prototype establishes the execution and visualization path on which those systems can be added.
+There is no endogenous reproduction yet. The conventional GP loop is a bootstrap experiment for testing whether the current genome, mutations, instruction set, and ecology are evolvable.
 
 ## Motivation
 

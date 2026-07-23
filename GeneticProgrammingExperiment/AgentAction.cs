@@ -4,5 +4,6 @@ public enum AgentAction
 {
     None,
     MoveForward,
-    TurnRight
+    TurnRight,
+    Eat
 }

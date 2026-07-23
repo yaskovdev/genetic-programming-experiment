@@ -41,6 +41,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
@@ -49,16 +50,31 @@
                     Grid.Column="0"
                     Click="OnPlayPauseClick"
                     Content="Pause" />
-            <Button Grid.Column="1"
+            <Button x:Name="StepButton"
+                    Grid.Column="1"
                     Click="OnStepClick"
                     Content="Step" />
-            <Button Grid.Column="2"
+            <Button x:Name="ResetButton"
+                    Grid.Column="2"
                     Click="OnResetClick"
                     Content="Reset" />
-            <TextBlock x:Name="StatusTextBlock"
-                       Grid.Column="4"
-                       VerticalAlignment="Center"
-                       FontSize="14" />
+            <Button x:Name="EvolveButton"
+                    Grid.Column="3"
+                    Click="OnEvolveClick"
+                    Content="Evolve" />
+            <StackPanel Grid.Column="5"
+                        MinWidth="410"
+                        VerticalAlignment="Center">
+                <TextBlock x:Name="StatusTextBlock"
+                           HorizontalAlignment="Right"
+                           FontSize="14" />
+                <ProgressBar x:Name="EnergyProgressBar"
+                             Height="6"
+                             Margin="0,7,0,0"
+                             Maximum="100"
+                             Background="#303A4B"
+                             Foreground="#65D58A" />
+            </StackPanel>
         </Grid>
 
         <Border Grid.Row="1"
@@ -93,9 +109,17 @@
                      TextWrapping="Wrap" />
         </Grid>
 
-        <TextBlock Grid.Row="3"
-                   Margin="0,12,0,0"
-                   Foreground="#8995A8"
-                   Text="Space: play or pause   Right arrow: single step   R: reset" />
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Foreground="#8995A8"
+                       Text="Space: play or pause   Right arrow: single step   R: reset   E: evolve" />
+            <TextBlock x:Name="EvolutionStatusTextBlock"
+                       Grid.Column="1"
+                       Foreground="#A8D8FF" />
+        </Grid>
     </Grid>
 </Window>

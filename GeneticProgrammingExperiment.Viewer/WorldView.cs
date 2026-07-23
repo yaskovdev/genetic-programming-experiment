@@ -12,6 +12,9 @@ public sealed class WorldView : FrameworkElement
     private static readonly Brush BoardBrush = CreateBrush(24, 30, 40);
     private static readonly Brush AgentCellBrush = CreateBrush(40, 72, 92);
     private static readonly Brush AgentBrush = CreateBrush(255, 177, 74);
+    private static readonly Brush DeadAgentBrush = CreateBrush(151, 76, 76);
+    private static readonly Brush FoodBrush = CreateBrush(80, 211, 124);
+    private static readonly Brush FoodGlowBrush = CreateBrush(38, 91, 58);
     private static readonly Pen BorderPen = CreatePen(62, 75, 96, 1.5);
     private static readonly Pen GridPen = CreatePen(47, 58, 75, 1);
     private static readonly Pen TrailPen = CreatePen(79, 175, 255, 4);
@@ -74,9 +77,28 @@ public sealed class WorldView : FrameworkElement
         var board = new Rect(left, top, boardWidth, boardHeight);
 
         drawingContext.DrawRoundedRectangle(BoardBrush, BorderPen, board, 5, 5);
+        DrawFood(drawingContext, left, top, cellSize);
         DrawGrid(drawingContext, board, cellSize);
         DrawTrail(drawingContext, left, top, cellSize);
         DrawAgent(drawingContext, left, top, cellSize, _snapshot.Agent);
+    }
+
+    private void DrawFood(DrawingContext drawingContext, double left, double top, double cellSize)
+    {
+        for (var y = 0; y < _snapshot!.Height; y++)
+        {
+            for (var x = 0; x < _snapshot.Width; x++)
+            {
+                if (_snapshot.FoodAt(x, y) == 0)
+                {
+                    continue;
+                }
+
+                var center = new Point(left + (x + 0.5) * cellSize, top + (y + 0.5) * cellSize);
+                drawingContext.DrawEllipse(FoodGlowBrush, null, center, cellSize * 0.28, cellSize * 0.28);
+                drawingContext.DrawEllipse(FoodBrush, null, center, cellSize * 0.17, cellSize * 0.17);
+            }
+        }
     }
 
     private void DrawGrid(DrawingContext drawingContext, Rect board, double cellSize)
@@ -159,7 +181,7 @@ public sealed class WorldView : FrameworkElement
         }
 
         geometry.Freeze();
-        drawingContext.DrawGeometry(AgentBrush, null, geometry);
+        drawingContext.DrawGeometry(agent.IsAlive ? AgentBrush : DeadAgentBrush, null, geometry);
     }
 
     private static Point ToCenter(Point position, double left, double top, double cellSize) =>

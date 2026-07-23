@@ -8,7 +8,10 @@ using global::GeneticProgrammingExperiment;
 public partial class MainWindow : Window
 {
     private readonly DispatcherTimer _timer;
+    private PushProgram _activeProgram = PushProgram.Parse(World.DefaultProgramSource);
     private World _world = null!;
+    private CancellationTokenSource? _evolutionCancellation;
+    private bool _isEvolving;
     private bool _isRunning;
 
     public MainWindow()
@@ -34,6 +37,7 @@ public partial class MainWindow : Window
     private void OnClosed(object? sender, EventArgs e)
     {
         _timer.Stop();
+        _evolutionCancellation?.Cancel();
     }
 
     private void OnTimerTick(object? sender, EventArgs e)
@@ -57,8 +61,60 @@ public partial class MainWindow : Window
         ResetWorld();
     }
 
+    private async void OnEvolveClick(object sender, RoutedEventArgs e)
+    {
+        if (_isEvolving)
+        {
+            return;
+        }
+
+        SetRunning(false);
+        _isEvolving = true;
+        SetControlsEnabled(false);
+        EvolutionStatusTextBlock.Text = "Starting evolution";
+
+        var cancellation = new CancellationTokenSource();
+        _evolutionCancellation = cancellation;
+        var progress = new Progress<EvolutionProgress>(DisplayEvolutionProgress);
+        var evolutionCompleted = false;
+        try
+        {
+            var engine = new EvolutionEngine();
+            var result = await Task.Run(() => engine.Run(progress: progress, cancellationToken: cancellation.Token));
+            _activeProgram = result.BestProgram;
+            EvolutionStatusTextBlock.Text =
+                $"Generation {result.Generation}   Fitness {result.Fitness:F0}   Food {result.AverageFoodEaten:F1}";
+            ResetWorld();
+            evolutionCompleted = true;
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            EvolutionStatusTextBlock.Text = "Evolution cancelled";
+        }
+        finally
+        {
+            if (ReferenceEquals(_evolutionCancellation, cancellation))
+            {
+                _evolutionCancellation = null;
+            }
+
+            cancellation.Dispose();
+            _isEvolving = false;
+            SetControlsEnabled(true);
+            if (evolutionCompleted)
+            {
+                SetRunning(true);
+            }
+        }
+    }
+
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
+        if (_isEvolving)
+        {
+            return;
+        }
+
         switch (e.Key)
         {
             case Key.Space:
@@ -74,6 +130,10 @@ public partial class MainWindow : Window
                 ResetWorld();
                 e.Handled = true;
                 break;
+            case Key.E:
+                OnEvolveClick(sender, e);
+                e.Handled = true;
+                break;
         }
     }
 
@@ -84,7 +144,7 @@ public partial class MainWindow : Window
 
     private void ResetWorld()
     {
-        _world = World.CreateDefault();
+        _world = World.CreateDefault(_activeProgram);
         var snapshot = _world.Snapshot;
         WorldViewControl.Reset(snapshot);
         DisplayStatus(snapshot);
@@ -95,6 +155,10 @@ public partial class MainWindow : Window
     {
         WorldViewControl.Display(snapshot);
         DisplayStatus(snapshot);
+        if (!snapshot.Agent.IsAlive)
+        {
+            SetRunning(false);
+        }
     }
 
     private void DisplayStatus(WorldSnapshot snapshot)
@@ -104,15 +168,31 @@ public partial class MainWindow : Window
             AgentAction.None => "none",
             AgentAction.MoveForward => "move",
             AgentAction.TurnRight => "turn right",
+            AgentAction.Eat => "eat",
             _ => throw new ArgumentOutOfRangeException()
         };
 
-        StatusTextBlock.Text =
-            $"Tick {snapshot.Tick,5}   Position ({snapshot.Agent.X,2}, {snapshot.Agent.Y,2})   Heading {snapshot.Agent.Direction,-5}   Action {action}";
+        var life = snapshot.Agent.IsAlive ? $"Energy {snapshot.Agent.Energy,3}/{snapshot.Agent.MaximumEnergy}" : "DEAD";
+        StatusTextBlock.Text = $"Tick {snapshot.Tick,5}   {life}   Eaten {snapshot.Agent.FoodEaten,3}   Position ({snapshot.Agent.X,2}, {snapshot.Agent.Y,2})   {action}";
+        EnergyProgressBar.Maximum = snapshot.Agent.MaximumEnergy;
+        EnergyProgressBar.Value = snapshot.Agent.Energy;
+    }
+
+    private void DisplayEvolutionProgress(EvolutionProgress progress)
+    {
+        EvolutionStatusTextBlock.Text =
+            $"Evolving {progress.Generation}/{progress.TotalGenerations}   Best {progress.BestFitness:F0}   Food {progress.BestAverageFoodEaten:F1}";
+        EnergyProgressBar.Maximum = progress.TotalGenerations;
+        EnergyProgressBar.Value = progress.Generation;
     }
 
     private void SetRunning(bool isRunning)
     {
+        if (isRunning && (_isEvolving || !_world.Snapshot.Agent.IsAlive))
+        {
+            isRunning = false;
+        }
+
         _isRunning = isRunning;
         PlayPauseButton.Content = isRunning ? "Pause" : "Play";
 
@@ -124,5 +204,13 @@ public partial class MainWindow : Window
         {
             _timer.Stop();
         }
+    }
+
+    private void SetControlsEnabled(bool isEnabled)
+    {
+        PlayPauseButton.IsEnabled = isEnabled;
+        StepButton.IsEnabled = isEnabled;
+        ResetButton.IsEnabled = isEnabled;
+        EvolveButton.IsEnabled = isEnabled;
     }
 }

@@ -10,7 +10,7 @@ public sealed class PushInterpreter
     private readonly FixedStack<bool> _booleans = new(DefaultBooleanStackCapacity);
     private readonly FixedStack<PushElement> _execution = new(DefaultExecutionStackCapacity);
 
-    public PushExecutionResult Execute(PushProgram program, long tick, int instructionLimit)
+    public PushExecutionResult Execute(PushProgram program, PushSensors sensors, int instructionLimit)
     {
         ArgumentNullException.ThrowIfNull(program);
         if (instructionLimit <= 0)
@@ -37,7 +37,7 @@ public sealed class PushInterpreter
                     Expand(block);
                     break;
                 case PushInstructionElement instruction:
-                    action = Execute(instruction.Instruction, tick);
+                    action = Execute(instruction.Instruction, sensors);
                     break;
             }
         }
@@ -46,18 +46,30 @@ public sealed class PushInterpreter
         return new PushExecutionResult(action, instructionsExecuted, reachedInstructionLimit);
     }
 
-    private AgentAction Execute(PushInstruction instruction, long tick)
+    private AgentAction Execute(PushInstruction instruction, PushSensors sensors)
     {
         switch (instruction)
         {
             case PushInstruction.SensorTick:
-                _integers.TryPush(unchecked((int)tick));
+                _integers.TryPush(unchecked((int)sensors.Tick));
+                break;
+            case PushInstruction.SensorFoodHere:
+                _integers.TryPush(sensors.FoodHere);
+                break;
+            case PushInstruction.SensorFoodAhead:
+                _integers.TryPush(sensors.FoodAhead);
+                break;
+            case PushInstruction.SensorEnergy:
+                _integers.TryPush(sensors.Energy);
                 break;
             case PushInstruction.IntegerModulo:
                 IntegerModulo();
                 break;
             case PushInstruction.IntegerEquals:
                 IntegerEquals();
+                break;
+            case PushInstruction.IntegerGreaterThan:
+                IntegerGreaterThan();
                 break;
             case PushInstruction.ExecIf:
                 ExecIf();
@@ -66,6 +78,8 @@ public sealed class PushInterpreter
                 return AgentAction.TurnRight;
             case PushInstruction.ActionMoveForward:
                 return AgentAction.MoveForward;
+            case PushInstruction.ActionEat:
+                return AgentAction.Eat;
             default:
                 throw new ArgumentOutOfRangeException(nameof(instruction), instruction, "Unknown Push instruction.");
         }
@@ -109,6 +123,18 @@ public sealed class PushInterpreter
         var right = _integers.Pop();
         var left = _integers.Pop();
         _booleans.TryPush(left == right);
+    }
+
+    private void IntegerGreaterThan()
+    {
+        if (_integers.Count < 2)
+        {
+            return;
+        }
+
+        var right = _integers.Pop();
+        var left = _integers.Pop();
+        _booleans.TryPush(left > right);
     }
 
     private void ExecIf()

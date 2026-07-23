@@ -1,6 +1,7 @@
 namespace GeneticProgrammingExperiment;
 
 using System.Globalization;
+using System.Text;
 
 public sealed class PushProgram
 {
@@ -13,6 +14,12 @@ public sealed class PushProgram
     public string Source { get; }
 
     internal PushCodeBlock Root { get; }
+
+    internal static PushProgram FromRoot(PushCodeBlock root)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        return new PushProgram(Format(root), root);
+    }
 
     public static PushProgram Parse(string source)
     {
@@ -29,6 +36,57 @@ public sealed class PushProgram
     }
 
     public override string ToString() => Source;
+
+    private static string Format(PushElement element)
+    {
+        var result = new StringBuilder();
+        Append(element, result);
+        return result.ToString();
+    }
+
+    private static void Append(PushElement element, StringBuilder result)
+    {
+        switch (element)
+        {
+            case PushInteger integer:
+                result.Append(integer.Value.ToString(CultureInfo.InvariantCulture));
+                break;
+            case PushInstructionElement instruction:
+                result.Append(GetName(instruction.Instruction));
+                break;
+            case PushCodeBlock block:
+                result.Append('(');
+                for (var index = 0; index < block.Elements.Length; index++)
+                {
+                    if (index > 0)
+                    {
+                        result.Append(' ');
+                    }
+
+                    Append(block.Elements[index], result);
+                }
+
+                result.Append(')');
+                break;
+        }
+    }
+
+    private static string GetName(PushInstruction instruction) =>
+        instruction switch
+        {
+            PushInstruction.SensorTick => "sensor.tick",
+            PushInstruction.SensorFoodHere => "sensor.food-here",
+            PushInstruction.SensorFoodAhead => "sensor.food-ahead",
+            PushInstruction.SensorEnergy => "sensor.energy",
+            PushInstruction.IntegerModulo => "integer.%",
+            PushInstruction.IntegerEquals => "integer.=",
+            PushInstruction.IntegerGreaterThan => "integer.>",
+            PushInstruction.ExecIf => "exec.if",
+            PushInstruction.ActionTurnRight => "action.turn-right",
+            PushInstruction.ActionMoveForward => "action.move-forward",
+            PushInstruction.ActionEat => "action.eat",
+            _ => throw new ArgumentOutOfRangeException(nameof(instruction), instruction, "Unknown Push instruction.")
+        };
 
     private sealed class Parser(string source)
     {
@@ -88,11 +146,16 @@ public sealed class PushProgram
             var instruction = token switch
             {
                 "sensor.tick" => PushInstruction.SensorTick,
+                "sensor.food-here" => PushInstruction.SensorFoodHere,
+                "sensor.food-ahead" => PushInstruction.SensorFoodAhead,
+                "sensor.energy" => PushInstruction.SensorEnergy,
                 "integer.%" => PushInstruction.IntegerModulo,
                 "integer.=" => PushInstruction.IntegerEquals,
+                "integer.>" => PushInstruction.IntegerGreaterThan,
                 "exec.if" => PushInstruction.ExecIf,
                 "action.turn-right" => PushInstruction.ActionTurnRight,
                 "action.move-forward" => PushInstruction.ActionMoveForward,
+                "action.eat" => PushInstruction.ActionEat,
                 _ => throw Error($"Unknown Push instruction '{token}'.")
             };
 
@@ -149,9 +212,14 @@ internal sealed record PushCodeBlock(PushElement[] Elements) : PushElement;
 internal enum PushInstruction
 {
     SensorTick,
+    SensorFoodHere,
+    SensorFoodAhead,
+    SensorEnergy,
     IntegerModulo,
     IntegerEquals,
+    IntegerGreaterThan,
     ExecIf,
     ActionTurnRight,
-    ActionMoveForward
+    ActionMoveForward,
+    ActionEat
 }
