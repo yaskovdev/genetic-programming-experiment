@@ -1,0 +1,101 @@
+﻿<Window x:Class="GeneticProgrammingExperiment.Viewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:GeneticProgrammingExperiment.Viewer"
+        Title="Genetic Programming Experiment"
+        Width="1000"
+        Height="700"
+        MinWidth="720"
+        MinHeight="520"
+        WindowStartupLocation="CenterScreen"
+        Background="#11151D"
+        Foreground="#E7ECF3"
+        KeyDown="OnKeyDown">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Padding" Value="18,8" />
+            <Setter Property="MinWidth" Value="86" />
+            <Setter Property="Background" Value="#283141" />
+            <Setter Property="Foreground" Value="#F5F7FA" />
+            <Setter Property="BorderBrush" Value="#46536A" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#DCE3ED" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Button x:Name="PlayPauseButton"
+                    Grid.Column="0"
+                    Click="OnPlayPauseClick"
+                    Content="Pause" />
+            <Button Grid.Column="1"
+                    Click="OnStepClick"
+                    Content="Step" />
+            <Button Grid.Column="2"
+                    Click="OnResetClick"
+                    Content="Reset" />
+            <TextBlock x:Name="StatusTextBlock"
+                       Grid.Column="4"
+                       VerticalAlignment="Center"
+                       FontSize="14" />
+        </Grid>
+
+        <Border Grid.Row="1"
+                Margin="0,16,0,0"
+                Padding="8"
+                Background="#181E28"
+                BorderBrush="#303A4B"
+                BorderThickness="1"
+                CornerRadius="8">
+            <local:WorldView x:Name="WorldViewControl" />
+        </Border>
+
+        <Grid Grid.Row="2" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0"
+                       Margin="0,0,12,0"
+                       VerticalAlignment="Center"
+                       FontWeight="SemiBold"
+                       Text="Push program" />
+            <TextBox x:Name="ProgramTextBox"
+                     Grid.Column="1"
+                     Padding="10,7"
+                     IsReadOnly="True"
+                     Background="#0D1118"
+                     BorderBrush="#303A4B"
+                     Foreground="#A8D8FF"
+                     FontSize="13"
+                     TextWrapping="Wrap" />
+        </Grid>
+
+        <TextBlock Grid.Row="3"
+                   Margin="0,12,0,0"
+                   Foreground="#8995A8"
+                   Text="Space: play or pause   Right arrow: single step   R: reset" />
+    </Grid>
+</Window>
