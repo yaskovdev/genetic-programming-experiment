@@ -38,11 +38,7 @@ The initial implementation uses:
 - Three deterministic food layouts with 400 ticks per evaluation
 - Fitness based primarily on food consumed, with survival, remaining energy, and a small program-size penalty
 
-Evolution begins with a simple straight-line forager and a mixture of its mutants and random valid Push programs:
-
-```push
-(sensor.food-here 0 integer.> exec.if (action.eat) (action.move-forward))
-```
+Evolution begins with the viable turning forager shown above and a mixture of its mutants and random valid Push programs. Starting from a controller that already explores lets mutation-only GP refine its behavior instead of first having to reconstruct a multi-instruction turning condition.
 
 Run the viewer from the repository root:
 

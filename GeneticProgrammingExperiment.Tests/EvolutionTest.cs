@@ -1,10 +1,11 @@
 namespace GeneticProgrammingExperiment.Tests;
 
-using global::GeneticProgrammingExperiment;
-
 [TestClass]
 public sealed class EvolutionTest
 {
+    private const string DefaultProgramSource =
+        "(sensor.food-here 0 integer.> exec.if (action.eat) (sensor.tick 8 integer.% 0 integer.= exec.if (action.turn-right) (action.move-forward)))";
+
     [TestMethod]
     public void RandomGenomesAndMutationsShouldBeDeterministicAndBounded()
     {
@@ -12,13 +13,27 @@ public sealed class EvolutionTest
         var second = PushGenome.CreateRandom(123);
         var firstMutation = first.Mutate(456);
         var secondMutation = second.Mutate(456);
-        var oversized = PushGenome.FromProgram(PushProgram.Parse(World.DefaultProgramSource));
+        var oversized = PushGenome.FromProgram(PushProgram.Parse(DefaultProgramSource));
         var reduced = oversized.Mutate(789, 2);
 
         Assert.AreEqual(first.Develop().Source, second.Develop().Source);
         Assert.AreEqual(firstMutation.Develop().Source, secondMutation.Develop().Source);
         Assert.IsLessThanOrEqualTo(PushGenome.DefaultMaximumPoints, firstMutation.PointCount);
         Assert.IsLessThanOrEqualTo(2, reduced.PointCount);
+    }
+
+    [TestMethod]
+    public void EvolutionProgramsShouldBeAbleToTurn()
+    {
+        var seedProgram = PushProgram.Parse(DefaultProgramSource);
+        var randomProgramCanTurn = Enumerable
+            .Range(0, 64)
+            .Select(seed => PushGenome.CreateRandom(seed).Develop())
+            .Any(ProgramCanTurn);
+
+        Assert.AreEqual(DefaultProgramSource, seedProgram.Source);
+        Assert.IsTrue(ProgramCanTurn(seedProgram));
+        Assert.IsTrue(randomProgramCanTurn);
     }
 
     [TestMethod]
@@ -50,7 +65,7 @@ public sealed class EvolutionTest
         var options = new EvolutionOptions
         {
             PopulationSize = 24,
-            Generations = 6,
+            Generations = 60,
             EpisodeTicks = 160,
             TournamentSize = 4,
             EliteCount = 2,
@@ -76,9 +91,25 @@ public sealed class EvolutionTest
             Generations = 1,
             TournamentSize = 2,
             EliteCount = 1,
-            MaximumProgramPoints = 2
+            MaximumProgramPoints = 2,
+            SeedProgramSource = DefaultProgramSource
         };
 
         Assert.ThrowsExactly<ArgumentException>(() => new EvolutionEngine().Run(options));
+    }
+
+    private static bool ProgramCanTurn(PushProgram program)
+    {
+        var interpreter = new PushInterpreter();
+        for (var tick = 0; tick < 64; tick++)
+        {
+            var execution = interpreter.Execute(program, new PushSensors(tick, 0, 0, World.DefaultInitialEnergy), 64);
+            if (execution.Action == AgentAction.TurnRight)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

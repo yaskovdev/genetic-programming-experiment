@@ -5,6 +5,8 @@ using System.Text;
 
 public sealed class PushProgram
 {
+    public const string Empty = "()";
+
     private PushProgram(string source, PushCodeBlock root)
     {
         Source = source;

@@ -2,12 +2,9 @@ namespace GeneticProgrammingExperiment;
 
 public sealed record EvolutionOptions
 {
-    public const string DefaultSeedProgramSource =
-        "(sensor.food-here 0 integer.> exec.if (action.eat) (action.move-forward))";
-
     public int PopulationSize { get; init; } = 100;
 
-    public int Generations { get; init; } = 40;
+    public int Generations { get; init; } = 1000;
 
     public int EpisodeTicks { get; init; } = 400;
 
@@ -25,7 +22,7 @@ public sealed record EvolutionOptions
 
     public int[] FoodSeeds { get; init; } = [11, 29, 47];
 
-    public string SeedProgramSource { get; init; } = DefaultSeedProgramSource;
+    public string SeedProgramSource { get; init; } = PushProgram.Empty;
 
     internal void Validate()
     {

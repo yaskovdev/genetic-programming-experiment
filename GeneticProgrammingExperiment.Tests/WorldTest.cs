@@ -5,6 +5,9 @@ using global::GeneticProgrammingExperiment;
 [TestClass]
 public sealed class WorldTest
 {
+    private const string DefaultProgramSource =
+        "(sensor.food-here 0 integer.> exec.if (action.eat) (sensor.tick 8 integer.% 0 integer.= exec.if (action.turn-right) (action.move-forward)))";
+
     private const string WalkingProgramSource =
         "(sensor.tick 8 integer.% 0 integer.= exec.if (action.turn-right) (action.move-forward))";
 
@@ -85,7 +88,7 @@ public sealed class WorldTest
     [TestMethod]
     public void ShouldChooseForagingBranchesFromSensors()
     {
-        var program = PushProgram.Parse(World.DefaultProgramSource);
+        var program = PushProgram.Parse(DefaultProgramSource);
         var interpreter = new PushInterpreter();
 
         var eat = interpreter.Execute(program, new PushSensors(0, 1, 0, 50), 64);
@@ -130,7 +133,7 @@ public sealed class WorldTest
     }
 
     [TestMethod]
-    public void DefaultForagerShouldRemainAlive()
+    public void DefaultForagerShouldDie()
     {
         var world = World.CreateDefault();
 
@@ -140,7 +143,7 @@ public sealed class WorldTest
         }
 
         var snapshot = world.Snapshot;
-        Assert.IsTrue(snapshot.Agent.IsAlive, $"The baseline forager died at tick {snapshot.Tick} after eating {snapshot.Agent.FoodEaten} food.");
-        Assert.IsGreaterThan(0, snapshot.Agent.FoodEaten);
+        Assert.IsFalse(snapshot.Agent.IsAlive, $"The baseline forager didn't die at tick {snapshot.Tick} after eating {snapshot.Agent.FoodEaten} food.");
+        Assert.AreEqual(0, snapshot.Agent.FoodEaten);
     }
 }

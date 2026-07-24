@@ -8,7 +8,7 @@ using global::GeneticProgrammingExperiment;
 public partial class MainWindow : Window
 {
     private readonly DispatcherTimer _timer;
-    private PushProgram _activeProgram = PushProgram.Parse(World.DefaultProgramSource);
+    private PushProgram _activeProgram = PushProgram.Parse(PushProgram.Empty);
     private World _world = null!;
     private CancellationTokenSource? _evolutionCancellation;
     private bool _isEvolving;

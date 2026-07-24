@@ -150,7 +150,7 @@ public sealed class EvolutionEngine
         }
 
         var worldCount = options.FoodSeeds.Length;
-        var averageFitness = totalFitness / worldCount - genome.PointCount * 0.05;
+        var averageFitness = totalFitness / worldCount;
         return new Candidate(
             genome,
             program,

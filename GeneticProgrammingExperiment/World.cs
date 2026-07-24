@@ -2,9 +2,6 @@ namespace GeneticProgrammingExperiment;
 
 public sealed class World
 {
-    public const string DefaultProgramSource =
-        "(sensor.food-here 0 integer.> exec.if (action.eat) (sensor.tick 8 integer.% 0 integer.= exec.if (action.turn-right) (action.move-forward)))";
-
     public const int MaximumEnergy = 100;
     public const int DefaultInitialEnergy = 50;
     public const int BasalEnergyCost = 1;
@@ -95,8 +92,7 @@ public sealed class World
 
     public WorldSnapshot Snapshot => CreateSnapshot();
 
-    public static World CreateDefault() =>
-        CreateDefault(PushProgram.Parse(DefaultProgramSource));
+    public static World CreateDefault() => CreateDefault(PushProgram.Parse(PushProgram.Empty));
 
     public static World CreateDefault(PushProgram program, int foodSeed = 0) =>
         new(24, 16, 15, 4, Direction.East, program, foodSeed: foodSeed);
